@@ -19,7 +19,7 @@ library(tidyverse)
 
 ## Read in data
 
-```{r include=FALSE}
+```{r include=TRUE}
 data_tbl <- read.csv("All CGW surface data_v2.csv")
 
 month <- month(as.POSIXlt(data_tbl$Date, format="%m/%d/%Y"))
@@ -32,19 +32,70 @@ df <- data.frame(month, year, variable)
 df <- df[df$variable !=9999, ]
 ```
 
+## Subsetting data for a selected years
+
+```{r include=TRUE}
+first_year <- 2016:2017
+second_year <- 2020:2021
+df_filt_first <- df[df$year == first_year, ] 
+df_filt_second <- df[df$year == second_year, ]
+
+# checking distribution (normal or non-normal). If p < 0.01 data is not normally distributed
+shapiro.test(df_filt_first$variable)
+shapiro.test(df_filt_second$variable)
+```
+
 ## Boxplotting monthly data from a selected year
 
-```{r include=FALSE}
-sel_year <- 2017
-df_filt <- df[df$year == sel_year, ] 
-mo <- month.name[df_filt$month]
-mo_data <- data.frame("month" = mo, "salinity" = df_filt$variable)
-mo_data$month <- factor(mo_data$month, levels = month.name)
+```{r include=TRUE}
 
-p <- ggplot(mo_data, aes(x = month, y = salinity)) + 
+# Plot data for the first selected year
+mo_1 <- month.name[df_filt_first$month]
+mo_data_1 <- data.frame("month" = mo_1, "salinity" = df_filt_first$variable)
+mo_data_1$month <- factor(mo_data_1$month, levels = month.name)
+
+p1 <- ggplot(mo_data_1, aes(x = month, y = salinity)) + 
     geom_boxplot() + 
-  ggtitle(as.character(sel_year)) +
+  ggtitle(paste(as.character(first_year[1]), "-", as.character(first_year[2]))) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-p
+p1
+
+# Plot data for the second selected year
+mo_2 <- month.name[df_filt_second$month]
+mo_data_2 <- data.frame("month" = mo_2, "salinity" = df_filt_second$variable)
+mo_data_2$month <- factor(mo_data_2$month, levels = month.name)
+
+p2 <- ggplot(mo_data_2, aes(x = month, y = salinity)) + 
+    geom_boxplot() + 
+  ggtitle(paste(as.character(second_year[1]), "-", as.character(second_year[2]))) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+p2
+
 ```
+
+## Run Kruskal-Wallis test
+
+```{r include=TRUE}
+
+# For entire time periods: first versus second selected periods (p < 0.01 indicates periods are different)
+kw_test <- kruskal.test(list(df_filt_first$variable, df_filt_second$variable))
+print(kw_test)
+
+# Compare month of the first versus months of the second periods (e.g. Jan 2016-2017 vs Jan 2020-2021; p < 0.01 indicates periods are different)
+kw_mo <- matrix(ncol = 1, nrow = 12) 
+for (j in 1:12){
+df_mo_first <- df_filt_first[df_filt_first$month == j, ] 
+df_mo_second <- df_filt_second[df_filt_second$month == j, ] 
+kw_test_mo <- kruskal.test(list(df_mo_first$variable, df_mo_second$variable))
+kw_mo[j, ] <- kw_test_mo$p.value
+}
+
+kw_mo <- data.frame("p_value" = kw_mo$V1)
+
+```
+
+
+
+
+
 
