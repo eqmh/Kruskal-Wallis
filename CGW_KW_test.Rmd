@@ -82,15 +82,31 @@ kw_test <- kruskal.test(list(df_filt_first$variable, df_filt_second$variable))
 print(kw_test)
 
 # Compare month of the first versus months of the second periods (e.g. Jan 2016-2017 vs Jan 2020-2021; p < 0.01 indicates periods are different)
-kw_mo <- matrix(ncol = 1, nrow = 12) 
+kw_mo_p <- matrix(ncol = 1, nrow = 12) 
+kw_mo_chi <- matrix(ncol = 1, nrow = 12) 
 for (j in 1:12){
 df_mo_first <- df_filt_first[df_filt_first$month == j, ] 
 df_mo_second <- df_filt_second[df_filt_second$month == j, ] 
 kw_test_mo <- kruskal.test(list(df_mo_first$variable, df_mo_second$variable))
-kw_mo[j, ] <- kw_test_mo$p.value
+kw_mo_p[j, ] <- kw_test_mo$p.value
+kw_mo_chi[j, ] <- kw_test_mo$statistic
 }
 
-kw_mo <- data.frame("p_value" = kw_mo$V1)
+kw_mo <- data.frame("chi-squared" = kw_mo_chi, "p_value" = kw_mo_p)
+
+# Plot Chi-squared to identify months that are statistically different between sampling periods (check months for which p < 0.05)
+q <- ggplot(data = kw_mo, aes(x = 1:12, y = chi.squared)) +
+  geom_line() +
+  scale_x_continuous(breaks = seq(0, 12, by = 1)) +
+  labs(x = "month", y = "Chi-squared value")
+q
+
+# Plot p values to identify months that are statistically different between sampling periods 
+qq <- ggplot(data = kw_mo, aes(x = 1:12, y = p_value)) +
+  geom_line() +
+  scale_x_continuous(breaks = seq(0, 12, by = 1)) +
+  labs(x = "month", y = "p value")
+qq
 
 ```
 
