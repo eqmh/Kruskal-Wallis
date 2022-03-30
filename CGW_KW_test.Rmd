@@ -1,0 +1,50 @@
+---
+title: "CGW_Kruskal-Wallis_test"
+author: "eqmh"
+date: '2022-03-29'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load libraries
+```{r include=FALSE}
+
+library(lubridate)
+library(reshape2)
+library(tidyverse)
+```
+
+## Read in data
+
+```{r include=FALSE}
+data_tbl <- read.csv("All CGW surface data_v2.csv")
+
+month <- month(as.POSIXlt(data_tbl$Date, format="%m/%d/%Y"))
+year <- year(as.POSIXlt(data_tbl$Date, format="%m/%d/%Y"))
+variable <- data_tbl$Salinity
+
+df <- data.frame(month, year, variable)
+
+# remove 9999 values
+df <- df[df$variable !=9999, ]
+```
+
+## Boxplotting monthly data from a selected year
+
+```{r include=FALSE}
+sel_year <- 2017
+df_filt <- df[df$year == sel_year, ] 
+mo <- month.name[df_filt$month]
+mo_data <- data.frame("month" = mo, "salinity" = df_filt$variable)
+mo_data$month <- factor(mo_data$month, levels = month.name)
+
+p <- ggplot(mo_data, aes(x = month, y = salinity)) + 
+    geom_boxplot() + 
+  ggtitle(as.character(sel_year)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+p
+```
+
